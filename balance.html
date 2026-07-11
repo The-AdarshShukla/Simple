@@ -1,0 +1,2507 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>PayFlow Pro • QR Scan & Pay</title>
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- QR Scanner Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f9;
+            color: #0b1a33;
+            overflow-x: hidden;
+        }
+
+        :root {
+            --primary-blue: #0a3cbf;
+            --primary-dark: #052c8c;
+            --accent-gold: #f5a623;
+            --success: #0e9f6e;
+            --danger: #e53e3e;
+            --surface-white: #ffffff;
+            --surface-gray: #f8fafd;
+            --text-main: #111827;
+            --text-muted: #5b6e8c;
+            --border-light: #eef2f6;
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            --shadow-lg: 0 20px 35px -8px rgba(0, 0, 0, 0.1);
+            --radius-xl: 32px;
+            --radius-2xl: 40px;
+        }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .back-btn {
+            width: 42px;
+            height: 42px;
+            background: #f0f4ff;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--primary-blue);
+        }
+
+        .back-btn:active {
+            transform: scale(0.92);
+            background: #e6edfe;
+        }
+
+        .app-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #0a3cbf, #1f5ef0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .app-header h1 i {
+            background: none;
+            -webkit-background-clip: unset;
+            background-clip: unset;
+            color: var(--primary-blue);
+            margin-right: 6px;
+        }
+
+        .main-container {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 18px 16px 90px 16px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin: 8px 0 14px 0;
+            color: #0c2a4b;
+        }
+
+        .accounts-scroll {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            scrollbar-width: thin;
+        }
+
+        .bank-card {
+            min-width: 280px;
+            background: var(--surface-white);
+            border-radius: var(--radius-xl);
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+            transition: all 0.25s;
+            cursor: pointer;
+        }
+
+        .bank-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .bank-card.bandhan {
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .bank-card.canara {
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .bank-info h4 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .bank-acct {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            letter-spacing: 0.3px;
+        }
+
+        .balance-btn {
+            background: #eff3fc;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .balance-btn:active {
+            background: #e2e9fa;
+            transform: scale(0.96);
+        }
+
+        .bank-icon {
+            width: 56px;
+            height: 56px;
+            background: #f7faff;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--primary-blue);
+        }
+
+        .add-txn-card {
+            min-width: 120px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: var(--radius-xl);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1.5px dashed #bbcdf0;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .add-txn-card:active {
+            transform: scale(0.96);
+            background: white;
+        }
+
+        .add-circle {
+            background: var(--primary-blue);
+            width: 54px;
+            height: 54px;
+            border-radius: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 18px rgba(10, 60, 191, 0.3);
+        }
+
+        .add-circle i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .history-card {
+            background: var(--surface-white);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-md);
+            padding: 22px 18px;
+            margin-top: 6px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .history-header h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+
+        .action-icons i {
+            font-size: 1.2rem;
+            margin-left: 20px;
+            color: #6c7e9e;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .action-icons i:active {
+            transform: scale(0.92);
+            color: var(--primary-blue);
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 14px;
+        }
+
+        .chip {
+            background: #eff2f9;
+            padding: 7px 20px;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .chip.active {
+            background: var(--primary-blue);
+            color: white;
+            box-shadow: 0 4px 8px rgba(10, 60, 191, 0.2);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafdff;
+            padding: 12px 18px;
+            border-radius: 60px;
+            margin-bottom: 24px;
+            border: 1px solid #eef2fa;
+        }
+
+        .total-badge {
+            background: #f0f3fe;
+            padding: 5px 16px;
+            border-radius: 40px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            color: var(--primary-blue);
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 540px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .txn-item {
+            background: var(--surface-white);
+            border-radius: 28px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid #edeff6;
+            transition: all 0.2s;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .txn-item:active {
+            background: #fbfdff;
+            transform: scale(0.99);
+            border-color: #dce3ef;
+        }
+
+        .txn-avatar {
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(145deg, #ecf3ff, #e4ecfe);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--primary-blue);
+        }
+
+        .txn-details {
+            flex: 1;
+        }
+
+        .txn-name {
+            font-weight: 800;
+            font-size: 0.95rem;
+            text-transform: capitalize;
+        }
+
+        .txn-time {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .txn-cat {
+            font-size: 0.6rem;
+            background: #f2f5fa;
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 30px;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .txn-amount {
+            text-align: right;
+            font-weight: 800;
+            color: #1e2b48;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #cbd5e0;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 8px;
+            transition: 0.1s;
+        }
+
+        .delete-btn:active {
+            color: var(--danger);
+            transform: scale(0.94);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-card {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 48px;
+            padding: 28px 24px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-card h3 {
+            font-weight: 800;
+            margin-bottom: 18px;
+            font-size: 1.5rem;
+        }
+
+        .modal-card input,
+        .modal-card select {
+            width: 100%;
+            padding: 14px 18px;
+            margin: 8px 0;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            background: white;
+            transition: 0.2s;
+        }
+
+        .modal-card input:focus,
+        .modal-card select:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(10, 60, 191, 0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .cancel-modal-btn {
+            background: #eff2f9;
+            border: none;
+            flex: 1;
+            padding: 14px;
+            border-radius: 60px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            flex: 1;
+            padding: 14px;
+            border-radius: 60px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .save-btn:active {
+            transform: scale(0.97);
+        }
+
+        .footer-brand {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #8d9bb0;
+            margin-top: 24px;
+            font-weight: 500;
+        }
+
+        .custom-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 16px;
+            right: 16px;
+            background: #1f2f4f;
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 60px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            font-size: 0.85rem;
+            animation: fadeInUp 0.2s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-fullscreen {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #dff3ff;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+        }
+
+        .success-fullscreen.active {
+            display: block;
+        }
+
+        .paytm-success-card {
+            width: 100%;
+            max-width: 100%;
+            min-height: 100vh;
+            background: #dff3ff;
+            border-radius: 0;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .success-header-area {
+            background: #dff3ff;
+            padding-bottom: 16px;
+        }
+
+        .nav-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+        }
+
+        .back-icon {
+            font-size: 26px;
+            color: #000;
+            cursor: pointer;
+        }
+
+        .dots-menu {
+            font-size: 24px;
+            color: #000;
+            cursor: pointer;
+        }
+
+        .paytm-logo img {
+            width: 100px;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        .receiver-block {
+            text-align: center;
+            margin-top: 16px;
+            padding: 0 20px;
+        }
+
+        .receiver-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 6px;
+        }
+
+        .upi-id-light {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            color: #444;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .amount-verified-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin: 28px 0 20px;
+            padding: 0 20px;
+        }
+
+        .big-amount {
+            font-size: 72px;
+            font-weight: 800;
+            color: #000;
+            line-height: 1;
+        }
+
+        .verified-chip-large {
+            background: none;
+            padding: 0;
+            box-shadow: none;
+            border-radius: 0;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .verified-chip-large i {
+            color: #17c964;
+            font-size: 52px;
+        }
+
+        .txn-card {
+            background: none;
+            border: none;
+            box-shadow: none;
+            margin: 0 20px 16px;
+            text-align: center;
+            padding: 0;
+        }
+
+        .txn-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .txn-label {
+            color: #444;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .txn-value {
+            color: #111;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .ref-row-custom {
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding-top: 0;
+        }
+
+        .copy-ref-btn {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            color: #333;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .action-grid {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            padding: 20px 20px 30px;
+            flex-wrap: wrap;
+        }
+
+        .action-pill {
+            background: #fff;
+            border: none;
+            border-radius: 30px;
+            min-width: 130px;
+            height: 52px;
+            font-size: 17px;
+            font-weight: 700;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .action-pill:first-child {
+            background: #fff;
+            color: #111;
+        }
+
+        .action-pill:last-child {
+            background: #12b32f;
+            color: #fff;
+        }
+
+        .action-pill:active {
+            transform: scale(0.97);
+        }
+
+        .divider-light {
+            height: 10px;
+            width: 100%;
+            background: linear-gradient(to bottom, #003ea8 0%, #003ea8 45%, #00b7ff 45%, #00b7ff 100%);
+        }
+
+        .reminder-area {
+            background: #f1f1f1;
+            text-align: center;
+            padding: 50px 25px 60px;
+        }
+
+        .reminder-title {
+            font-size: 52px;
+            font-weight: 800;
+            color: #111;
+            line-height: 1.1;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .reminder-btn {
+            background: #f7c83c;
+            border: none;
+            height: 70px;
+            width: 340px;
+            max-width: 100%;
+            border-radius: 40px;
+            font-size: 28px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .reminder-btn:active {
+            transform: scale(0.97);
+        }
+
+        .mock-phone {
+            margin: 50px auto 0;
+            width: 260px;
+            height: 430px;
+            background: #fff;
+            border-radius: 40px;
+            border: 10px solid #333;
+            color: #002970;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .bottom-tab-bar {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 330px;
+            height: 68px;
+            background: #002d8d;
+            border-radius: 40px;
+            border: none;
+            padding: 0 16px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .tab-item {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .tab-item i {
+            font-size: 22px;
+        }
+
+        .tab-item.active {
+            color: #fff;
+        }
+
+        @media (max-width: 480px) {
+            .paytm-logo img {
+                width: 80px;
+            }
+
+            .receiver-name {
+                font-size: 24px;
+            }
+
+            .upi-id-light {
+                font-size: 14px;
+            }
+
+            .big-amount {
+                font-size: 52px;
+            }
+
+            .verified-chip-large i {
+                font-size: 40px;
+            }
+
+            .amount-verified-wrapper {
+                gap: 8px;
+            }
+
+            .action-pill {
+                min-width: 110px;
+                height: 48px;
+                font-size: 15px;
+            }
+
+            .reminder-title {
+                font-size: 32px;
+            }
+
+            .reminder-btn {
+                width: 260px;
+                height: 56px;
+                font-size: 22px;
+            }
+
+            .bottom-tab-bar {
+                width: 280px;
+                height: 60px;
+            }
+
+            .tab-item {
+                font-size: 10px;
+            }
+
+            .tab-item i {
+                font-size: 20px;
+            }
+        }
+
+        .detail-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s ease;
+        }
+
+        .detail-modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .detail-modal-card {
+            background: var(--surface-white);
+            width: 88%;
+            max-width: 380px;
+            border-radius: 48px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            animation: modalPop 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .detail-header {
+            background: linear-gradient(135deg, #0a3cbf, #1f5ef0);
+            padding: 24px 20px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .detail-header .detail-icon-circle {
+            background: rgba(255, 255, 255, 0.2);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 32px;
+            backdrop-filter: blur(2px);
+        }
+
+        .detail-header h4 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            margin-bottom: 6px;
+        }
+
+        .detail-amount-badge {
+            background: rgba(255, 255, 255, 0.2);
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .detail-info-list {
+            padding: 20px 24px 28px;
+            background: white;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        .info-value {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #0c2a4b;
+            text-align: right;
+            word-break: break-word;
+            max-width: 55%;
+        }
+
+        .info-value.utr-copy {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-detail-ref {
+            background: #eef2ff;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
+            color: var(--primary-blue);
+        }
+
+        .copy-detail-ref:active {
+            background: #dee5fc;
+            transform: scale(0.96);
+        }
+
+        .detail-footer-close {
+            padding: 6px 24px 26px;
+            text-align: center;
+        }
+
+        .close-detail-btn {
+            background: #eff2f9;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--primary-blue);
+            transition: 0.15s;
+        }
+
+        .close-detail-btn:active {
+            background: #e6e9f0;
+            transform: scale(0.97);
+        }
+
+        .pin-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+        }
+
+        .pin-modal.active {
+            display: flex;
+        }
+
+        .pin-card {
+            background: white;
+            border-radius: 48px;
+            padding: 32px 24px;
+            width: 90%;
+            max-width: 340px;
+            text-align: center;
+        }
+
+        .pin-card h3 {
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .pin-card input {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            margin: 16px 0;
+        }
+
+        .pin-card .pin-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .pin-card .pin-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .pin-cancel {
+            background: #eff2f9;
+        }
+
+        .pin-confirm {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .balance-display {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            margin: 10px 0;
+        }
+
+        .qr-fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .qr-fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .qr-fullscreen-overlay #qr-reader-full {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .qr-fullscreen-overlay #qr-reader-full video {
+            width: 100%;
+            height: auto;
+            border-radius: 24px;
+        }
+
+        .qr-close-full {
+            position: absolute;
+            top: 40px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(6px);
+            border: none;
+            color: white;
+            font-size: 32px;
+            padding: 12px 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-weight: 700;
+        }
+
+        .qr-close-full:active {
+            transform: scale(0.94);
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .qr-hint {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            margin-top: 20px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .qr-hint i {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .qr-close-full {
+                top: 20px;
+                right: 16px;
+                font-size: 24px;
+                padding: 8px 16px;
+            }
+
+            .qr-hint {
+                font-size: 0.85rem;
+            }
+        }
+
+        .qr-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0 16px 0;
+        }
+
+        .qr-wrapper .qr-scan-btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(10, 60, 191, 0.2);
+            width: 100%;
+            justify-content: center;
+        }
+
+        .qr-wrapper .qr-scan-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 6px rgba(10, 60, 191, 0.15);
+        }
+
+        .qr-wrapper .qr-scan-btn i {
+            font-size: 1.1rem;
+        }
+
+        #qr-reader {
+            width: 100%;
+            max-width: 360px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border: 2px solid #e2e8f0;
+            background: #f8fafd;
+            display: none;
+        }
+
+        #qr-reader.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #qr-reader video {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .qr-wrapper .qr-scan-btn {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+
+            #qr-reader {
+                max-width: 300px;
+            }
+        }
+
+        /* UPI PIN Fullscreen UI Styling — professional & mobile first */
+        .upi-fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index: 9999;
+            display: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .upi-fullscreen-overlay.active {
+            display: block;
+        }
+
+        .upi-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            background: #fff;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .upi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        .upi-blank-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .upi-logo-text {
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #0b3c5d;
+            letter-spacing: -1px;
+        }
+
+        .upi-bank-card {
+            background: #0b3a7b;
+            color: white;
+            padding: 22px 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.05rem;
+            font-weight: 500;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(11, 58, 123, 0.2);
+        }
+
+        .upi-input-box {
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 30px 20px;
+            background: #f8fafc;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .upi-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 0 10px;
+        }
+
+        #upiInputLabel {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.05rem;
+        }
+
+        #upiToggleShow {
+            font-size: 0.9rem;
+            color: #0b3a7b;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .upi-dots-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+       
+        .upi-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #0b3a7b;
+            border-radius: 50%;
+            opacity: 0;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+        }
+
+  /* PIN Custom Container */
+.upi-pin-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+/* Har ek digit ka wrapper circle */
+.upi-dot-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #ccc; /* Khali hone par aisa dikhega */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9f9f9;
+    transition: all 0.2s ease;
+}
+
+/* Jab pin enter ho jaye aur hidden ho (Official Dot style) */
+.upi-dot.filled {
+    width: 14px;
+    height: 14px;
+    background-color: #333; /* Dark professional dot */
+    border-radius: 50%;
+    animation: popIn 0.15s ease-in-out;
+}
+
+/* Jab pin visible ho (Text Input style) */
+.upi-dot-wrapper input {
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: #333;
+    outline: none;
+}
+
+/* Professional Balance Result Card */
+#upiBalanceResult {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20); /* Deep premium green */
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    text-align: center;
+    animation: slideUp 0.4s ease-out;
+}
+
+#upiBalanceVal {
+    font-size: 26px;
+    font-weight: bold;
+    display: block;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+}
+
+/* Keyframe Animations */
+@keyframes popIn {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+}
+
+@keyframes slideUp {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+       
+
+        .upi-balance-result {
+            margin-top: 20px;
+            padding: 12px;
+            background: #e0f2fe;
+            border-radius: 8px;
+            color: #0369a1;
+            font-size: 1.1rem;
+            display: none;
+        }
+
+        .upi-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 20px 10px;
+            background: #ffffff;
+        }
+
+        .key-btn {
+            background: #ffffff;
+            border: none;
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #1e293b;
+            padding: 18px 0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .key-btn:active {
+            background: #f1f5f9;
+        }
+
+        .action-btn.backspace {
+            color: #ef4444;
+        }
+
+        .action-btn.submit {
+            color: #10b981;
+            font-size: 2rem;
+        }
+
+        /* Finishing touch: small screen adjustments */
+        @media (max-width: 420px) {
+            .upi-bank-card {
+                font-size: 0.9rem;
+                padding: 18px 16px;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .upi-dot-wrapper {
+                width: 36px;
+                height: 36px;
+            }
+
+            .upi-dot {
+                width: 10px;
+                height: 10px;
+            }
+
+            .key-btn {
+                font-size: 1.4rem;
+                padding: 14px 0;
+            }
+        }
+
+
+
+
+
+        /* PhonePe Style History Details Screen CSS */
+.pp-fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #f5f6f8;
+    z-index: 9999;
+    display: none;
+}
+.pp-fullscreen-overlay.active {
+    display: block;
+}
+.pp-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: #f5f6f8;
+    box-sizing: border-box;
+}
+.pp-header {
+    background-color: #247b3b; /* Pure Green Header from Image */
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 16px 16px;
+}
+.pp-blank-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+}
+.pp-header-title-box {
+    margin-left: 20px;
+    flex-grow: 1;
+}
+.pp-main-status {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+.pp-sub-status {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+.pp-content {
+    padding: 16px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+.pp-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.pp-section-label {
+    font-size: 0.85rem;
+    color: #111;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+.pp-receiver-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.pp-avatar-circle {
+    width: 44px;
+    height: 44px;
+    background-color: #f1f5f9;
+    color: #475569;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    font-size: 0.95rem;
+}
+.pp-receiver-info {
+    flex-grow: 1;
+}
+.pp-receiver-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+.pp-receiver-upi {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-top: 3px;
+}
+.pp-receiver-bank-label {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+.pp-amount-text {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #000;
+}
+.pp-divider {
+    border: 0;
+    border-top: 1px solid #f1f5f9;
+    margin: 16px 0;
+}
+.pp-transfer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 14px;
+}
+.pp-detail-item {
+    margin-bottom: 12px;
+}
+.pp-item-label {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+.pp-item-value-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px;
+}
+.pp-item-value-row span {
+    font-size: 0.88rem;
+    color: #1e293b;
+    font-weight: 500;
+    word-break: break-all;
+}
+.pp-copy-btn {
+    background: none;
+    border: none;
+    color: #6b21a8; /* Purple icon from image */
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+.pp-bank-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+.pp-bank-logo-box {
+    width: 36px;
+    height: 36px;
+    background: #742a2a;
+    color: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+.pp-bank-info {
+    flex-grow: 1;
+}
+.pp-bank-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #334155;
+}
+.pp-utr-label {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+.pp-amount-sub {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #000;
+}
+.pp-actions-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+    padding: 0 5px;
+}
+.pp-action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+.pp-action-circle {
+    width: 48px;
+    height: 48px;
+    background-color: #f3e8ff; /* Soft purple circle */
+    color: #6b21a8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+}
+.pp-action-item span {
+    font-size: 0.76rem;
+    color: #334155;
+    font-weight: 500;
+    text-align: center;
+}
+.pp-support-box {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    cursor: pointer;
+}
+.pp-support-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+.pp-support-left i {
+    font-size: 1.2rem;
+    color: #475569;
+}
+.pp-support-box > i {
+    color: #94a3b8;
+}
+.pp-footer-brand {
+    text-align: center;
+    margin-top: 30px;
+    color: #94a3b8;
+    font-size: 0.78rem;
+}
+.pp-brand-logos {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 5px;
+    font-weight: 700;
+}
+.upi-logo-mini { color: #0b3c5d; font-style: italic; }
+.bank-logo-mini { color: #b91c1c; }
+    </style>
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="back-btn" id="backArrow"><i class="fas fa-arrow-left"></i></div>
+        <h1><i class="fas fa-bolt"></i> PayFlow Pro</h1>
+    </header>
+
+    <main class="main-container">
+        <div class="section-title"><i class="fas fa-wallet"></i> <span>Linked Accounts</span></div>
+        <div class="accounts-scroll">
+            <div class="bank-card bandhan" id="bandhanCard">
+                <div class="bank-info">
+                    <h4>Bandhan Bank</h4>
+                    <div class="bank-acct">XXXX XXXX 5543</div><button class="balance-btn" id="bandhanBalanceBtn"><i
+                            class="fas fa-eye"></i> Check Balance</button>
+                </div>
+                <div class="bank-icon"><i class="fas fa-university"></i></div>
+            </div>
+            <div class="bank-card canara" id="canaraCard">
+                <div class="bank-info">
+                    <h4>Canara Bank</h4>
+                    <div class="bank-acct">XXXX XXXX 0552</div><button class="balance-btn" id="canaraBalanceBtn"><i
+                            class="fas fa-eye"></i> Check Balance</button>
+                </div>
+                <div class="bank-icon"><i class="fas fa-landmark"></i></div>
+            </div>
+            <div class="add-txn-card" id="openAddBtn">
+                <div class="add-circle"><i class="fas fa-plus"></i></div>
+                <span>Send Payment</span>
+            </div>
+        </div>
+
+        <div class="history-card">
+            <div class="history-header">
+                <h2><i class="fas fa-history"></i> Transaction Log</h2>
+                <div class="action-icons"><i class="fas fa-search" id="searchHistory"></i><i class="fas fa-filter"
+                        id="clearFilters"></i><i class="fas fa-download" id="exportData"></i></div>
+            </div>
+            <div class="filter-chips" id="filterChipsContainer">
+                <div class="chip active" data-filter="all">All Accounts</div>
+                <div class="chip" data-filter="Bandhan Bank - 5543">Bandhan Bank</div>
+                <div class="chip" data-filter="Canara Bank - 0552">Canara Bank</div>
+            </div>
+            <div class="summary-row"><span id="currentMonthDisplay">June 2026</span><span class="total-badge"
+                    id="totalSpentLabel">Total ₹0</span></div>
+            <div id="transactionList" class="transaction-list"></div>
+        </div>
+        <div class="footer-brand"><i class="fas fa-shield-alt"></i> Secure · Instant UTR Settlement</div>
+    </main>
+
+    <!-- Add Transaction Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-card">
+            <h3><i class="fas fa-paper-plane"></i> New Transfer</h3>
+            <div class="qr-wrapper">
+                <button class="qr-scan-btn" id="scanQrBtn"><i class="fas fa-qrcode"></i> Scan QR</button>
+                <div id="qr-reader" style="display:none;"></div>
+                <div class="qr-hint-text"><i class="fas fa-camera"></i><span>Scan any UPI QR code</span></div>
+            </div>
+            <input type="text" id="receiverName" placeholder="Beneficiary Name (auto-filled)" autocomplete="off">
+            <input type="number" id="amountValue" placeholder="Amount (INR)" autocomplete="off">
+            <select id="categorySelect">
+                <option value="Food & Dining">Food & Dining</option>
+                <option value="Medical">Medical & Healthcare</option>
+                <option value="Shopping">Retail & Shopping</option>
+                <option value="Bills & Recharge">Utilities & Recharge</option>
+                <option value="Others">General Transfer</option>
+            </select>
+            <input type="datetime-local" id="txnDatetime">
+            <select id="bankSelect">
+                <option value="Bandhan Bank - 5543">Bandhan Bank - 5543</option>
+                <option value="Canara Bank - 0552">Canara Bank - 0552</option>
+            </select>
+            <div class="modal-actions"><button class="cancel-modal-btn" id="cancelModalBtn">Cancel</button><button
+                    id="confirmAddBtn" class="save-btn">Send & Save</button></div>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN QR OVERLAY -->
+    <div class="qr-fullscreen-overlay" id="qrFullscreenOverlay">
+        <button class="qr-close-full" id="qrCloseFull"><i class="fas fa-times"></i></button>
+        <div id="qr-reader-full"></div>
+        <div class="qr-hint"><i class="fas fa-camera"></i> Position QR code in the center · Hold steady</div>
+    </div>
+
+    <!-- PIN Modal (legacy – kept for fallback) -->
+    <div class="pin-modal" id="pinModal">
+        <div class="pin-card">
+            <h3><i class="fas fa-lock"></i> Enter PIN</h3>
+            <p style="color:#5b6e8c; font-size:0.9rem;">XXXX</p><input type="password" id="pinInput" maxlength="6"
+                placeholder="• • • •" inputmode="numeric">
+            <div id="pinBalanceDisplay" class="balance-display" style="display:none;"></div>
+            <div class="pin-actions"><button class="pin-cancel" id="pinCancelBtn">Cancel</button><button
+                    class="pin-confirm" id="pinConfirmBtn">Verify</button></div>
+        </div>
+    </div>
+
+    <!-- SUCCESS PAGE -->
+    <div id="successFullscreen" class="success-fullscreen">
+        <div class="paytm-success-card">
+            <div class="success-header-area">
+                <div class="nav-row">
+                    <div class="back-icon" id="closeSuccessPage"><i class="fas fa-arrow-left"></i></div>
+                    <div class="paytm-logo"><img src="https://i.postimg.cc/5y2M8pyk/Screenshot-2026-06-06-172311.png"
+                            alt="Paytm Logo"></div>
+                    <div class="dots-menu"><i class="fas fa-ellipsis-v"></i></div>
+                </div>
+                <div class="receiver-block">
+                    <div class="receiver-name" id="succReceiverName">Adarsh Shukla</div>
+                    <div class="upi-id-light" id="succUpiId">shuklaadarsh@okupi</div>
+                </div>
+                <div class="amount-verified-wrapper"><span class="big-amount" id="succAmount">₹0</span>
+                    <div class="verified-chip-large" id="verifiedChip"><i class="fas fa-check-circle"></i></div>
+                </div>
+            </div>
+            <div class="txn-card">
+                <div class="txn-row"><span class="txn-label">Date & Time</span><span class="txn-value"
+                        id="succDateTime">--</span></div>
+                <div class="ref-row-custom"><span class="txn-label">Reference ID</span>
+                    <div style="display:flex;gap:12px;align-items:center;"><span class="txn-value"
+                            id="succRefNo">----</span><span class="copy-ref-btn" id="copyRefButton"><i
+                                class="far fa-copy"></i> Copy</span></div>
+                </div>
+            </div>
+            <div class="action-grid"><button class="action-pill" id="checkBalanceAction"><i class="fas fa-wallet"></i>
+                    Balance</button><button class="action-pill" id="payAgainAction"><i class="fas fa-redo-alt"></i> Pay
+                    Again</button><button class="action-pill" id="whatsShareAction"><i class="fab fa-whatsapp"></i>
+                    Share</button></div>
+            <div class="divider-light"></div>
+            <div class="reminder-area">
+                <div class="reminder-title">Now pay on time.<br>Every time.</div><button class="reminder-btn"
+                    id="reminderBtn">Set Reminders →</button>
+                <div class="mock-phone"><i class="fas fa-mobile-alt" style="font-size:38px;"></i> <span>UPI Payment
+                        Ready</span></div>
+            </div>
+            <div class="bottom-tab-bar">
+                <div class="tab-item"><i class="fas fa-home"></i><span>Home</span></div>
+                <div class="tab-item"><i class="fas fa-qrcode"></i><span>Scan</span></div>
+                <div class="tab-item active"><i class="fas fa-tag"></i><span>Offers</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSACTION DETAIL MODAL -->
+    <div id="transactionDetailModal" class="detail-modal-overlay">
+        <div class="detail-modal-card">
+            <div class="detail-header">
+                <div class="detail-icon-circle"><i class="fas fa-receipt"></i></div>
+                <h4 id="detailTxnReceiver">Transaction</h4>
+                <div class="detail-amount-badge" id="detailTxnAmount">₹0</div>
+            </div>
+            <div class="detail-info-list">
+                <div class="info-row"><span class="info-label"><i class="far fa-calendar-alt"></i> Date &
+                        Time</span><span class="info-value" id="detailTxnDateTime">--</span></div>
+                <div class="info-row"><span class="info-label"><i class="fas fa-tag"></i> Category</span><span
+                        class="info-value" id="detailTxnCategory">--</span></div>
+                <div class="info-row"><span class="info-label"><i class="fas fa-university"></i> Bank
+                        Account</span><span class="info-value" id="detailTxnBank">--</span></div>
+                <div class="info-row"><span class="info-label"><i class="fas fa-fingerprint"></i> UTR / Ref ID</span>
+                    <div class="info-value utr-copy"><span id="detailTxnUTR">--</span><span class="copy-detail-ref"
+                            id="copyDetailUTR"><i class="far fa-copy"></i> Copy</span></div>
+                </div>
+            </div>
+            <div class="detail-footer-close"><button class="close-detail-btn" id="closeDetailModalBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="successSound" preload="auto">
+        <source src="https://www.image2url.com/r2/default/audio/1780748863455-197ee552-4642-42c9-9893-a97054543876.mp3"
+            type="audio/mpeg">
+    </audio>
+
+    <!-- Full-Screen UPI PIN Page (Mobile Responsive) -->
+    <div id="upiPinFullscreen" class="upi-fullscreen-overlay">
+        <div class="upi-container">
+            <div class="upi-header">
+                <button id="upiBackBtn" class="upi-blank-btn"><i class="fas fa-arrow-left"></i></button>
+                <div class="upi-logo-box"><span class="upi-logo-text"><i>Unified Payments Interface</i></span></div>
+                <div style="width: 24px;"></div>
+            </div>
+            <div class="upi-bank-card"><span id="upiBankName">Bank Name - 0000</span><span
+                    id="upiBankAccNo">*********0000</span></div>
+            <div class="upi-input-box">
+                <div class="upi-input-header"><span id="upiInputLabel">Enter UPI PIN</span><button id="upiToggleShow"
+                        class="upi-blank-btn"><i class="far fa-eye"></i> Show</button></div>
+                <div class="upi-dots-container">
+                    <div class="upi-dot-wrapper">
+                        <div class="upi-dot"></div><input type="password" maxlength="1" disabled>
+                    </div>
+                    <div class="upi-dot-wrapper">
+                        <div class="upi-dot"></div><input type="password" maxlength="1" disabled>
+                    </div>
+                    <div class="upi-dot-wrapper">
+                        <div class="upi-dot"></div><input type="password" maxlength="1" disabled>
+                    </div>
+                    <div class="upi-dot-wrapper">
+                        <div class="upi-dot"></div><input type="password" maxlength="1" disabled>
+                    </div>
+                </div>
+                <div id="upiBalanceResult" class="upi-balance-result">Account Balance: <strong
+                        id="upiBalanceVal">₹0.00</strong></div>
+            </div>
+            <div style="flex-grow: 1;"></div>
+            <div class="upi-keypad">
+                <button class="key-btn" data-val="1">1</button><button class="key-btn" data-val="2">2</button><button
+                    class="key-btn" data-val="3">3</button>
+                <button class="key-btn" data-val="4">4</button><button class="key-btn" data-val="5">5</button><button
+                    class="key-btn" data-val="6">6</button>
+                <button class="key-btn" data-val="7">7</button><button class="key-btn" data-val="8">8</button><button
+                    class="key-btn" data-val="9">9</button>
+                <button class="key-btn action-btn backspace" id="keyBackspace"><i class="fas fa-backspace"></i></button>
+                <button class="key-btn" data-val="0">0</button>
+                <button class="key-btn action-btn submit" id="keySubmit"><i class="fas fa-check-circle"></i></button>
+            </div>
+        </div>
+    </div>
+
+<!-- Full-Screen PhonePe Style Transaction Detail Modal -->
+<div id="phonepeDetailModal" class="pp-fullscreen-overlay">
+    <div class="pp-container">
+        <!-- Green Header Section -->
+        <div class="pp-header">
+            <button id="ppCloseDetailBtn" class="pp-blank-btn"><i class="fas fa-arrow-left"></i></button>
+            <div class="pp-header-title-box">
+                <div class="pp-main-status">Transaction Successful</div>
+                <div id="ppHeaderTime" class="pp-sub-status">11:47 am on 19 May 2025</div>
+            </div>
+            <div style="width: 24px;"></div>
+        </div>
+
+        <div class="pp-content">
+            <!-- Paid To Card -->
+            <div class="pp-card">
+                <div class="pp-section-label">Paid to</div>
+                <div class="pp-receiver-row">
+                    <div class="pp-avatar-circle" id="ppDetailAvatar">SM</div>
+                    <div class="pp-receiver-info">
+                        <div id="ppDetailReceiver" class="pp-receiver-name">School Of Management Sciences</div>
+                        <div id="ppDetailUpiId" class="pp-receiver-upi">XXXXXXXXXXXX4563</div>
+                        <div class="pp-receiver-bank-label">UPI Target Account</div>
+                    </div>
+                    <div id="ppDetailAmount" class="pp-amount-text">₹2</div>
+                </div>
+                
+                <hr class="pp-divider">
+
+                <!-- Transfer Details Accordion Style Box -->
+                <div class="pp-transfer-header">
+                    <span><i class="far fa-list-alt"></i> &nbsp;Transfer Details</span>
+                    <i class="fas fa-chevron-up"></i>
+                </div>
+
+                <div class="pp-detail-item">
+                    <div class="pp-item-label">Transaction ID</div>
+                    <div class="pp-item-value-row">
+                        <span id="ppDetailTxnId">T2505191147029823707275</span>
+                        <button class="pp-copy-btn" id="ppCopyTxnId"><i class="far fa-copy"></i></button>
+                    </div>
+                </div>
+
+                <div class="pp-section-label" style="margin-top: 15px;">Debited from</div>
+                <div class="pp-bank-row">
+                    <div class="pp-bank-logo-box"><i class="fas fa-university"></i></div>
+                    <div class="pp-bank-info">
+                        <div id="ppDetailBank" class="pp-bank-name">XXXXXX756577</div>
+                        <div class="pp-utr-label">UTR: <span id="ppDetailUTR">611072068823</span></div>
+                    </div>
+                    <button class="pp-copy-btn" id="ppCopyUTR" style="align-self: flex-end; margin-bottom: 4px;"><i class="far fa-copy"></i></button>
+                    <div id="ppDetailAmountDebited" class="pp-amount-sub">₹2</div>
+                </div>
+                
+                <!-- Circular Action Buttons -->
+                <div class="pp-actions-row">
+                    <div class="pp-action-item" id="ppActionSendAgain">
+                        <div class="pp-action-circle"><i class="fas fa-arrow-up-right-from-square"></i></div>
+                        <span>Send Again</span>
+                    </div>
+                    <div class="pp-action-item" onclick="document.getElementById('phonepeDetailModal').classList.remove('active');">
+                        <div class="pp-action-circle"><i class="far fa-clock"></i></div>
+                        <span>View History</span>
+                    </div>
+                    <div class="pp-action-item" onclick="alert('Split Expense Feature Active');">
+                        <div class="pp-action-circle"><i class="fas fa-code-branch" style="transform: rotate(180deg);"></i></div>
+                        <span>Split Expense</span>
+                    </div>
+                    <div class="pp-action-item" id="ppActionShare">
+                        <div class="pp-action-circle"><i class="fas fa-share-alt"></i></div>
+                        <span>Share Receipt</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Support Box -->
+            <div class="pp-support-box" onclick="alert('Connecting to Customer Support...');">
+                <div class="pp-support-left">
+                    <i class="far fa-question-circle"></i>
+                    <span>Contact PayFlow Support</span>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+
+            <!-- Powered By Footer -->
+            <div class="pp-footer-brand">
+                <p>Powered by</p>
+                <div class="pp-brand-logos">
+                    <span class="upi-logo-mini">UPI</span>
+                    <span class="bank-logo-mini"><i class="fas fa-bolt"></i> SECURE</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="upi-pin-container">
+    <!-- Digit 1 -->
+    <div class="upi-dot-wrapper">
+        <div class="upi-dot"></div>
+        <input type="text" maxlength="1" readonly>
+    </div>
+    <!-- Digit 2 -->
+    <div class="upi-dot-wrapper">
+        <div class="upi-dot"></div>
+        <input type="text" maxlength="1" readonly>
+    </div>
+    <!-- Digit 3 -->
+    <div class="upi-dot-wrapper">
+        <div class="upi-dot"></div>
+        <input type="text" maxlength="1" readonly>
+    </div>
+    <!-- Digit 4 -->
+    <div class="upi-dot-wrapper">
+        <div class="upi-dot"></div>
+        <input type="text" maxlength="1" readonly>
+    </div>
+</div>
+
+<!-- Eye Icon Toggle Button -->
+<button onclick="togglePinVisibility()" id="eyeIcon" style="background:none; border:none; font-size:20px; cursor:pointer;">🙈</button>
+
+<!-- Balance Section -->
+<div id="upiBalanceResult" style="display:none;">
+    <span style="font-size: 14px; opacity: 0.9;">Available Balance</span>
+    <span id="upiBalanceVal">₹0.00</span>
+</div>
+
+    <script>
+        (function () {
+            // ----- DATA WITH CORRECT BALANCES -----
+            let bankBalances = { "Bandhan Bank - 5543": 15153.00, "Canara Bank - 0552": 5443.50 };
+            const PIN_CODE = "4753";
+            let transactions = [];
+            let currentFilter = "all";
+            let searchKeyword = "";
+            let lastTxnForSuccess = null;
+            let pendingBalanceCheckBank = null;
+            let fullScannerInstance = null;
+
+            function generateUTR() { return 'PF' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 10000); }
+            function playSuccessBeep() { const audio = document.getElementById("successSound"); if (audio) { audio.currentTime = 0; audio.play().catch(e => console.log); } }
+            function saveToStorage() { localStorage.setItem("payflow_pro_adv", JSON.stringify(transactions)); localStorage.setItem("payflow_balances", JSON.stringify(bankBalances)); }
+
+            function loadData() {
+                const stored = localStorage.getItem("payflow_pro_adv");
+                const storedBal = localStorage.getItem("payflow_balances");
+                // Always ensure latest code balances are applied if storage empty or mismatch
+                if (storedBal) {
+                    try { let parsed = JSON.parse(storedBal); bankBalances = parsed; } catch (e) { saveToStorage(); }
+                } else {
+                    saveToStorage();
+                }
+                if (stored) { transactions = JSON.parse(stored); transactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime)); }
+                else {
+                    const now = new Date(); const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+                    const formatDT = (d) => d.toISOString().slice(0, 16);
+                    transactions = [
+                        { id: Date.now() + 101, receiver: "Rajesh Sharma", amount: 1890, category: "Shopping", datetime: formatDT(now), bankAccount: "Bandhan Bank - 5543", utr: generateUTR() },
+                        { id: Date.now() + 102, receiver: "Dr. Anita Clinic", amount: 750, category: "Medical & Healthcare", datetime: formatDT(yesterday), bankAccount: "Canara Bank - 0552", utr: generateUTR() },
+                        { id: Date.now() + 103, receiver: "Metro Grocery", amount: 430, category: "Food & Dining", datetime: formatDT(yesterday), bankAccount: "Bandhan Bank - 5543", utr: generateUTR() }
+                    ];
+                    transactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+                    saveToStorage();
+                }
+            }
+
+            function formatDateTime(dtStr) { if (!dtStr) return "Just now"; let d = new Date(dtStr); return `${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; }
+            function formatForDetail(dtStr) { if (!dtStr) return "—"; let d = new Date(dtStr); return `${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; }
+            function getFiltered() { let filtered = [...transactions]; if (currentFilter !== "all") filtered = filtered.filter(t => t.bankAccount === currentFilter); if (searchKeyword.trim()) { let kw = searchKeyword.toLowerCase(); filtered = filtered.filter(t => t.receiver.toLowerCase().includes(kw) || t.category.toLowerCase().includes(kw)); } filtered.sort((a, b) => new Date(b.datetime) - new Date(a.datetime)); return filtered; }
+            function updateTotalUI() { const filtered = getFiltered(); const sum = filtered.reduce((acc, t) => acc + t.amount, 0); document.getElementById('totalSpentLabel').innerHTML = `Total ₹${sum.toLocaleString()}`; }
+            function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function (m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+
+            function renderTransactions() {
+                const container = document.getElementById('transactionList');
+                const filtered = getFiltered();
+                if (filtered.length === 0) { container.innerHTML = `<div style="text-align:center; padding:60px 20px;"><i class="fas fa-receipt" style="font-size:2.6rem; color:#cbd5e1;"></i><p style="margin-top:12px;">No transactions</p></div>`; updateTotalUI(); return; }
+                let html = '';
+                filtered.forEach(txn => {
+                    let initials = txn.receiver.substring(0, 2).toUpperCase();
+                    let bankShort = txn.bankAccount.includes("Bandhan") ? "BDB" : "CNB";
+                    html += `<div class="txn-item" data-txn-id="${txn.id}"><div class="txn-avatar">${escapeHtml(initials)}</div><div class="txn-details"><div class="txn-name">${escapeHtml(txn.receiver)}</div><div class="txn-time">${formatDateTime(txn.datetime)}</div><div class="txn-cat">${escapeHtml(txn.category)}</div></div><div class="txn-amount">-₹${txn.amount.toLocaleString()}<div style="font-size:0.55rem;">${bankShort}</div></div><button class="delete-btn" data-id="${txn.id}"><i class="fas fa-trash-alt"></i></button></div>`;
+                });
+                container.innerHTML = html;
+                document.querySelectorAll('.delete-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const id = parseInt(btn.getAttribute('data-id')); if (confirm("Delete?")) { transactions = transactions.filter(t => t.id !== id); saveToStorage(); renderTransactions(); updateChipActive(); } }); });
+                document.querySelectorAll('.txn-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        if (e.target.closest('.delete-btn')) return;
+                        const txnId = parseInt(item.getAttribute('data-txn-id'));
+                        const txn = transactions.find(t => t.id === txnId);
+                        if (txn) showTransactionDetail(txn);
+                    });
+                });
+                updateTotalUI();
+            }
+
+          // ----- यहाँ पेस्ट करें: NEW PHONEPE STYLE FULLSCREEN DETAIL LOGIC -----
+function showTransactionDetail(txn) {
+    if (!txn) return;
+    
+    // हेडर की डेट और टाइम को सुंदर फॉर्मेट करें
+    let d = new Date(txn.datetime);
+    let hours = d.getHours();
+    let minutes = d.getMinutes().toString().padStart(2, '0');
+    let ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12 || 12;
+    let day = d.getDate();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let monthStr = months[d.getMonth()];
+    let yearStr = d.getFullYear();
+    document.getElementById('ppHeaderTime').innerText = `${hours}:${minutes} ${ampm} on ${day} ${monthStr} ${yearStr}`;
+
+    // रिसीवर की डिटेल्स भरें
+    document.getElementById('ppDetailReceiver').innerText = txn.receiver;
+    document.getElementById('ppDetailUpiId').innerText = `${txn.receiver.replace(/\s/g, '').toLowerCase()}@okupi`;
+    document.getElementById('ppDetailAvatar').innerText = txn.receiver.substring(0, 2).toUpperCase();
+    document.getElementById('ppDetailAmount').innerText = `₹${txn.amount.toLocaleString('en-IN')}`;
+    
+    // ट्रांजैक्शन आईडी (यदि न हो तो नया जनरेट करें)
+    const txId = txn.utr ? 'T' + txn.utr.slice(2) + Math.floor(Math.random()*100) : 'T' + Date.now().toString().slice(-6) + '114702';
+    document.getElementById('ppDetailTxnId').innerText = txId;
+
+    // डेबिट बैंक डिटेल्स
+    let isBandhan = txn.bankAccount.includes("Bandhan");
+    document.getElementById('ppDetailBank').innerText = isBandhan ? "Bandhan Bank - 5543" : "Canara Bank - 0552";
+    document.getElementById('ppDetailUTR').innerText = txn.utr || generateUTR();
+    document.getElementById('ppDetailAmountDebited').innerText = `₹${txn.amount.toLocaleString('en-IN')}`;
+
+    // फुलस्क्रीन मोड एक्टिवेट करें
+    document.getElementById('phonepeDetailModal').classList.add('active');
+
+    // कॉपी बटन्स के इवेंट्स
+    setupPpCopyBtn('ppCopyTxnId', txId, "Transaction ID copied");
+    setupPpCopyBtn('ppCopyUTR', document.getElementById('ppDetailUTR').innerText, "UTR copied");
+
+    // 'Send Again' एक्शन बटन
+    const sendAgain = document.getElementById('ppActionSendAgain');
+    const newSendAgain = sendAgain.cloneNode(true);
+    sendAgain.parentNode.replaceChild(newSendAgain, sendAgain);
+    newSendAgain.addEventListener('click', () => {
+        document.getElementById('phonepeDetailModal').classList.remove('active');
+        document.getElementById('addModal').classList.add('active');
+        document.getElementById('receiverName').value = txn.receiver;
+        document.getElementById('amountValue').value = txn.amount;
+    });
+
+    // 'Share Receipt' एक्शन बटन
+    const shareBtn = document.getElementById('ppActionShare');
+    const newShareBtn = shareBtn.cloneNode(true);
+    shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
+    newShareBtn.addEventListener('click', () => {
+        let msg = `✅ Payment Successful!\n₹${txn.amount} sent to ${txn.receiver}\nUTR: ${txn.utr || 'NA'}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    });
+}
+
+function setupPpCopyBtn(btnId, textToCopy, toastMessage) {
+    const btn = document.getElementById(btnId);
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    newBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(textToCopy);
+        const toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        toast.innerHTML = `<i class="far fa-copy"></i> ${toastMessage}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1500);
+    });
+}
+
+// क्लोज बटन इवेंट बाइंडिंग
+document.getElementById('ppCloseDetailBtn').addEventListener('click', () => {
+    document.getElementById('phonepeDetailModal').classList.remove('active');
+});
+
+            function closeDetailModal() { document.getElementById('transactionDetailModal').classList.remove('active'); }
+            function updateChipActive() { document.querySelectorAll('.chip').forEach(chip => { const val = chip.getAttribute('data-filter'); if ((val === 'all' && currentFilter === 'all') || (val !== 'all' && currentFilter === val)) chip.classList.add('active'); else chip.classList.remove('active'); }); renderTransactions(); }
+            function toTitleCase(str) { if (!str) return ''; return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); }
+
+            function addAndShowSuccess(receiver, amount, category, datetime, bankAccount) {
+                if (!receiver || amount <= 0 || !datetime) return false;
+                let currentBalance = bankBalances[bankAccount] || 0;
+                if (amount > currentBalance) { alert(`Insufficient balance! Available: ₹${currentBalance.toLocaleString()}`); return false; }
+                bankBalances[bankAccount] = currentBalance - amount;
+                saveToStorage();
+                const formattedReceiver = toTitleCase(receiver.trim());
+                const newTxn = { id: Date.now(), receiver: formattedReceiver, amount: parseFloat(amount), category, datetime, bankAccount, utr: generateUTR() };
+                transactions.unshift(newTxn);
+                transactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+                saveToStorage();
+                renderTransactions();
+                playSuccessBeep();
+                lastTxnForSuccess = { ...newTxn, refNo: newTxn.utr };
+                openSuccessModal(newTxn);
+                const toastDiv = document.createElement('div'); toastDiv.className = 'custom-toast'; toastDiv.innerHTML = `<i class="fas fa-check-circle"></i> ₹${amount} sent to ${formattedReceiver} · UTR: ${newTxn.utr}`; document.body.appendChild(toastDiv); setTimeout(() => toastDiv.remove(), 2500);
+                return true;
+            }
+
+            function formatDateTimePrettyForSuccess(datetimeISO) {
+                if (!datetimeISO) return "Just now";
+                let d = new Date(datetimeISO);
+                let day = d.getDate(); let month = d.toLocaleString('en', { month: 'short' });
+                let hours = d.getHours(); let minutes = d.getMinutes().toString().padStart(2, '0');
+                let ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12 || 12;
+                return `${day} ${month}, ${hours}:${minutes} ${ampm}`;
+            }
+
+            function openSuccessModal(txn) {
+                const successDiv = document.getElementById('successFullscreen');
+                document.getElementById('succReceiverName').innerText = txn.receiver;
+                document.getElementById('succUpiId').innerText = `${txn.receiver.replace(/\s/g, '').toLowerCase()}@okupi`;
+                document.getElementById('succAmount').innerHTML = `₹${txn.amount.toLocaleString()}`;
+                document.getElementById('succDateTime').innerText = formatDateTimePrettyForSuccess(txn.datetime);
+                const refNum = txn.utr || generateUTR();
+                document.getElementById('succRefNo').innerText = refNum;
+                if (!txn.utr) { txn.utr = refNum; saveToStorage(); }
+                lastTxnForSuccess = { ...txn, refNo: refNum };
+                successDiv.classList.add('active');
+                document.getElementById('verifiedChip').style.transform = 'scale(1.05)';
+                setTimeout(() => document.getElementById('verifiedChip').style.transform = '', 300);
+            }
+
+            function closeSuccessPage() { document.getElementById('successFullscreen').classList.remove('active'); }
+            function shareWhatsApp() { if (lastTxnForSuccess) { let msg = `✅ Payment Successful!\n₹${lastTxnForSuccess.amount} sent to ${lastTxnForSuccess.receiver}\nRef: ${lastTxnForSuccess.utr || 'NA'}\nvia PayFlow Pro`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); } else alert("No recent transaction"); }
+            function payAgain() { closeSuccessPage(); document.getElementById('addModal').classList.add('active'); if (lastTxnForSuccess) { document.getElementById('receiverName').value = lastTxnForSuccess.receiver || ''; document.getElementById('amountValue').value = lastTxnForSuccess.amount || ''; } }
+
+            // ----- UPI PIN FULLSCREEN LOGIC (professional, mobile-first) -----
+            let enteredPin = "";
+            let isPinVisible = false;
+
+            function openUpiPinPage(bankAccountKey) {
+                pendingBalanceCheckBank = bankAccountKey;
+                enteredPin = "";
+                isPinVisible = false;
+                document.getElementById('upiBalanceResult').style.display = 'none';
+                document.getElementById('upiInputLabel').innerText = "Enter UPI PIN";
+                updatePinDotsUI();
+                const isBandhan = bankAccountKey.includes("Bandhan");
+                document.getElementById('upiBankName').innerText = isBandhan ? "Bandhan Bank" : "Canara Bank";
+                document.getElementById('upiBankAccNo').innerText = isBandhan ? "*********5543" : "*********0552";
+                document.getElementById('upiPinFullscreen').classList.add('active');
+            }
+
+           function updatePinDotsUI() {
+    const wrappers = document.querySelectorAll('.upi-dot-wrapper');
+    wrappers.forEach((wrapper, index) => {
+        const dot = wrapper.querySelector('.upi-dot');
+        const input = wrapper.querySelector('input');
+        
+        if (index < enteredPin.length) {
+            // Agar is index par pin enter ho chuka hai
+            if (isPinVisible) {
+                dot.style.display = "none";
+                input.style.display = "block";
+                input.value = enteredPin[index];
+            } else {
+                dot.style.display = "block";
+                dot.classList.add('filled');
+                input.style.display = "none";
+            }
+        } else {
+            // Empty states ke liye
+            dot.classList.remove('filled');
+            dot.style.display = "block"; // Khali circle dikhane ke liye
+            input.style.display = "none";
+            input.value = "";
+        }
+    });
+}
+
+// Eye icon par click karne ke liye toggle function
+function togglePinVisibility() {
+    isPinVisible = !isPinVisible;
+    
+    // Icon badalne ke liye (agar aapne eye icon lagaya hai)
+    const eyeIcon = document.getElementById('eyeIcon');
+    if (eyeIcon) {
+        eyeIcon.innerText = isPinVisible ? "👁️" : "🙈"; // Aap iski jagah SVG ya FontAwesome use kar sakte hain
+    }
+    
+    updatePinDotsUI();
+}
+
+            function handleKeypress(num) { if (enteredPin.length < 4) { enteredPin += num; updatePinDotsUI(); } }
+            function handleBackspace() { if (enteredPin.length > 0) { enteredPin = enteredPin.slice(0, -1); updatePinDotsUI(); } }
+
+            function processUpiPinSubmit() {
+                if (enteredPin === PIN_CODE) {
+                    if (pendingBalanceCheckBank) {
+                        const storedBal = localStorage.getItem("payflow_balances");
+                        if (storedBal) { try { bankBalances = JSON.parse(storedBal); } catch (e) { } }
+                        const bal = bankBalances[pendingBalanceCheckBank] || 0;
+                        const resDiv = document.getElementById('upiBalanceResult');
+                        const valSpan = document.getElementById('upiBalanceVal');
+                        valSpan.innerText = `₹${bal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+                        resDiv.style.display = 'block';
+                        document.getElementById('upiInputLabel').innerText = "UPI PIN Verified";
+                        setTimeout(() => { document.getElementById('upiPinFullscreen').classList.remove('active'); }, 3500);
+                    }
+                } else {
+                    alert('Incorrect UPI PIN. Try again.');
+                    enteredPin = "";
+                    updatePinDotsUI();
+                }
+            }
+
+            // ----- FULLSCREEN QR SCANNER -----
+            function startFullscreenQr() {
+                const overlay = document.getElementById('qrFullscreenOverlay');
+                overlay.classList.add('active');
+                const readerDiv = document.getElementById('qr-reader-full');
+                readerDiv.innerHTML = '';
+                if (fullScannerInstance) { fullScannerInstance.clear().catch(() => { }); fullScannerInstance = null; }
+                fullScannerInstance = new Html5Qrcode("qr-reader-full");
+                const config = { fps: 20, qrbox: { width: 300, height: 300 } };
+                fullScannerInstance.start({ facingMode: "environment" }, config, onFullScanSuccess, onFullScanError);
+            }
+
+            function onFullScanSuccess(decodedText, decodedResult) {
+                try {
+                    let name = "";
+                    if (decodedText.includes("upi://")) { const url = new URL(decodedText); const params = new URLSearchParams(url.search); name = params.get('pn') || ""; }
+                    else { name = decodedText.substring(0, 30); }
+                    if (name) document.getElementById('receiverName').value = name;
+                    else document.getElementById('receiverName').value = decodedText.substring(0, 30);
+                    stopFullscreenQr();
+                    const toast = document.createElement('div'); toast.className = 'custom-toast'; toast.innerHTML = `<i class="fas fa-check"></i> QR scanned: ${name || 'Beneficiary'}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 2000);
+                } catch (e) { document.getElementById('receiverName').value = decodedText.substring(0, 30); stopFullscreenQr(); }
+            }
+            function onFullScanError(err) { /* ignore */ }
+
+            function stopFullscreenQr() {
+                if (fullScannerInstance) {
+                    fullScannerInstance.stop().then(() => { fullScannerInstance.clear(); document.getElementById('qrFullscreenOverlay').classList.remove('active'); fullScannerInstance = null; }).catch(() => { document.getElementById('qrFullscreenOverlay').classList.remove('active'); fullScannerInstance = null; });
+                } else { document.getElementById('qrFullscreenOverlay').classList.remove('active'); }
+            }
+
+            // ----- EVENT BINDINGS -----
+            document.getElementById('openAddBtn').addEventListener('click', () => { document.getElementById('addModal').classList.add('active'); const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); document.getElementById('txnDatetime').value = now.toISOString().slice(0, 16); });
+            document.getElementById('cancelModalBtn').addEventListener('click', () => { document.getElementById('addModal').classList.remove('active'); stopFullscreenQr(); });
+            document.getElementById('confirmAddBtn').addEventListener('click', () => {
+                const receiver = document.getElementById('receiverName').value.trim();
+                const amount = document.getElementById('amountValue').value;
+                const category = document.getElementById('categorySelect').value;
+                let datetime = document.getElementById('txnDatetime').value;
+                const bankAccount = document.getElementById('bankSelect').value;
+                if (!receiver) { alert("Beneficiary name required"); return; }
+                if (!amount || parseFloat(amount) <= 0) { alert("Valid amount required"); return; }
+                if (!datetime) datetime = new Date().toISOString().slice(0, 16);
+                const success = addAndShowSuccess(receiver, parseFloat(amount), category, datetime, bankAccount);
+                if (success) { document.getElementById('receiverName').value = ''; document.getElementById('amountValue').value = ''; document.getElementById('addModal').classList.remove('active'); stopFullscreenQr(); }
+            });
+            document.getElementById('scanQrBtn').addEventListener('click', startFullscreenQr);
+            document.getElementById('qrCloseFull').addEventListener('click', stopFullscreenQr);
+            document.getElementById('qrFullscreenOverlay').addEventListener('click', function (e) { if (e.target === this) stopFullscreenQr(); });
+
+            document.getElementById('backArrow').addEventListener('click', () => alert("Dashboard overview • Secure environment"));
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const curDate = new Date(); document.getElementById('currentMonthDisplay').innerText = `${monthNames[curDate.getMonth()]} ${curDate.getFullYear()}`;
+
+            // UPI PIN page triggers
+            document.getElementById('bandhanBalanceBtn').addEventListener('click', (e) => { e.stopPropagation(); openUpiPinPage("Bandhan Bank - 5543"); });
+            document.getElementById('canaraBalanceBtn').addEventListener('click', (e) => { e.stopPropagation(); openUpiPinPage("Canara Bank - 0552"); });
+
+            // UPI PIN page controls
+            document.getElementById('upiBackBtn').addEventListener('click', () => { document.getElementById('upiPinFullscreen').classList.remove('active'); });
+            document.getElementById('upiToggleShow').addEventListener('click', () => {
+                isPinVisible = !isPinVisible;
+                document.getElementById('upiToggleShow').innerHTML = isPinVisible ? `<i class="far fa-eye-slash"></i> Hide` : `<i class="far fa-eye"></i> Show`;
+                updatePinDotsUI();
+            });
+            document.querySelectorAll('.key-btn[data-val]').forEach(btn => { btn.addEventListener('click', () => { handleKeypress(btn.getAttribute('data-val')); }); });
+            document.getElementById('keyBackspace').addEventListener('click', handleBackspace);
+            document.getElementById('keySubmit').addEventListener('click', processUpiPinSubmit);
+
+            // Legacy PIN modal (fallback)
+            document.getElementById('pinCancelBtn').addEventListener('click', () => { document.getElementById('pinModal').classList.remove('active'); document.getElementById('pinBalanceDisplay').style.display = 'none'; });
+            document.getElementById('pinConfirmBtn').addEventListener('click', () => { /* legacy */ });
+            document.getElementById('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { /* legacy */ } });
+
+            document.getElementById('closeSuccessPage').addEventListener('click', closeSuccessPage);
+            document.getElementById('copyRefButton').addEventListener('click', () => { let refTxt = document.getElementById('succRefNo').innerText; navigator.clipboard.writeText(refTxt); alert("Reference ID copied"); });
+            document.getElementById('checkBalanceAction').addEventListener('click', () => { if (lastTxnForSuccess) { openUpiPinPage(lastTxnForSuccess.bankAccount); } else alert("No account selected"); });
+            document.getElementById('payAgainAction').addEventListener('click', payAgain);
+            document.getElementById('whatsShareAction').addEventListener('click', shareWhatsApp);
+            document.getElementById('reminderBtn').addEventListener('click', () => alert("🔔 Reminder set for future payments!"));
+            document.getElementById('closeDetailModalBtn').addEventListener('click', closeDetailModal);
+            document.getElementById('transactionDetailModal').addEventListener('click', (e) => { if (e.target === document.getElementById('transactionDetailModal')) closeDetailModal(); });
+            document.getElementById('searchHistory').addEventListener('click', () => { let kw = prompt("Search by name or category:", searchKeyword); if (kw !== null) { searchKeyword = kw; renderTransactions(); } });
+            document.getElementById('clearFilters').addEventListener('click', () => { currentFilter = "all"; searchKeyword = ""; updateChipActive(); });
+            document.getElementById('exportData').addEventListener('click', () => { const dataStr = JSON.stringify(transactions, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `payflow_export_${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href); });
+
+            document.querySelectorAll('.chip').forEach(chip => { chip.addEventListener('click', () => { currentFilter = chip.getAttribute('data-filter'); updateChipActive(); }); });
+
+            loadData();
+            renderTransactions();
+            currentFilter = "all";
+            updateChipActive();
+        })();
+    </script>
+</body>
+
+</html>
